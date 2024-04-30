@@ -12,7 +12,7 @@ services:
       - $PWD/postgres-data:/var/lib/postgresql/data
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.3
+    build: .
     container_name: keycloak
     ports:
       - "8080:8080"
