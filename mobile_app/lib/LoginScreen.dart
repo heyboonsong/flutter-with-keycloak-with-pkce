@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:openid_client/openid_client_io.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,6 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  FlutterAppAuth appAuth = const FlutterAppAuth();
   final String _clientId = 'pkce-client';
   final String _issuer = 'http://localhost:8080/realms/heyboonsong';
   final String _redirectUrl = 'com.example.mobileapp:/oauth2redirect';
@@ -64,24 +66,39 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> login() async {
-    var issuer = await Issuer.discover(Uri.parse(_issuer));
-    var client = Client(issuer, _clientId);
-    urlLauncher(String url) async {
-      Uri uri = Uri.parse(url);
-      if (await launchUrl(uri)) {
-      } else {
-        throw 'Could not launch $url';
-      }
-    }
+    // var issuer = await Issuer.discover(Uri.parse(_issuer));
+    // var client = Client(issuer, _clientId);
+    // urlLauncher(String url) async {
+    //   Uri uri = Uri.parse(url);
+    //   if (await launchUrl(uri)) {
+    //   } else {
+    //     throw 'Could not launch $url';
+    //   }
+    // }
 
-    var authenticator = Authenticator(
-      client,
-      urlLancher: urlLauncher,
-      scopes: _scopes,
-      redirectUri: Uri.parse(_redirectUrl),
+    // var authenticator = Authenticator(
+    //   client,
+    //   urlLancher: urlLauncher,
+    //   scopes: _scopes,
+    //   redirectUri: Uri.parse(_redirectUrl),
+    // );
+    // var code = await authenticator.authorize();
+    // print('code: $code');
+    // await closeInAppWebView();
+
+    final AuthorizationTokenResponse? result =
+        await appAuth.authorizeAndExchangeCode(
+      AuthorizationTokenRequest(
+        _clientId,
+        _redirectUrl,
+        discoveryUrl: '$_issuer/.well-known/openid-configuration',
+        scopes: [
+          'openid',
+          'profile',
+          'email',
+        ],
+      ),
     );
-    var code = await authenticator.authorize();
-    print('code: $code');
-    await closeInAppWebView();
+    print(result);
   }
 }
