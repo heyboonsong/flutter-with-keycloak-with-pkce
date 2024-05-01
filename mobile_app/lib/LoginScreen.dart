@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
-import 'package:openid_client/openid_client_io.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile_app/HomeScreen.dart';
+import 'package:mobile_app/Token.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,15 +15,64 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   FlutterAppAuth appAuth = const FlutterAppAuth();
-  final String _clientId = 'pkce-client';
-  final String _issuer = 'http://localhost:8080/realms/heyboonsong';
-  final String _redirectUrl = 'com.example.mobileapp:/oauth2redirect';
-
-  final List<String> _scopes = <String>[
+  final String clientId = 'pkce-client';
+  final String redirectUrl = 'com.example.mobileapp:/oauth2redirect';
+  final String issuer = 'http://localhost:8080/realms/heyboonsong';
+  final String discoveryUrl =
+      'http://localhost:8080/realms/heyboonsong/.well-known/openid-configuration';
+  final List<String> scopes = <String>[
     'openid',
     'profile',
     'email',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void gotoHomeScreen(Token token) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(token: token),
+      ),
+    );
+  }
+
+  Future<void> loginAction() async {
+    try {
+      final AuthorizationResponse? response = await appAuth.authorize(
+        AuthorizationRequest(clientId, redirectUrl,
+            discoveryUrl: discoveryUrl, scopes: scopes),
+      );
+      if (response != null) {
+        final TokenResponse? tokenResponse = await appAuth.token(
+          TokenRequest(clientId, redirectUrl,
+              discoveryUrl: discoveryUrl,
+              codeVerifier: response.codeVerifier,
+              authorizationCode: response.authorizationCode),
+        );
+        if (tokenResponse != null) {
+          Token token = Token(tokenResponse.idToken!,
+              tokenResponse.accessToken!, tokenResponse.refreshToken!);
+          gotoHomeScreen(token);
+        }
+      } else {
+        print('Authorization error');
+      }
+    } catch (e) {
+      print('Login error: $e');
+    }
+  }
+
+  Future<TokenResponse?> getToken(
+      String authorizationCode, String codeVerifier) {
+    return appAuth.token(TokenRequest(clientId, redirectUrl,
+        discoveryUrl: discoveryUrl,
+        codeVerifier: codeVerifier,
+        authorizationCode: authorizationCode));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              login();
+              loginAction();
             },
             child: Container(
               padding: const EdgeInsets.all(10),
@@ -63,42 +115,5 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     ));
-  }
-
-  Future<void> login() async {
-    // var issuer = await Issuer.discover(Uri.parse(_issuer));
-    // var client = Client(issuer, _clientId);
-    // urlLauncher(String url) async {
-    //   Uri uri = Uri.parse(url);
-    //   if (await launchUrl(uri)) {
-    //   } else {
-    //     throw 'Could not launch $url';
-    //   }
-    // }
-
-    // var authenticator = Authenticator(
-    //   client,
-    //   urlLancher: urlLauncher,
-    //   scopes: _scopes,
-    //   redirectUri: Uri.parse(_redirectUrl),
-    // );
-    // var code = await authenticator.authorize();
-    // print('code: $code');
-    // await closeInAppWebView();
-
-    final AuthorizationTokenResponse? result =
-        await appAuth.authorizeAndExchangeCode(
-      AuthorizationTokenRequest(
-        _clientId,
-        _redirectUrl,
-        discoveryUrl: '$_issuer/.well-known/openid-configuration',
-        scopes: [
-          'openid',
-          'profile',
-          'email',
-        ],
-      ),
-    );
-    print(result);
   }
 }
