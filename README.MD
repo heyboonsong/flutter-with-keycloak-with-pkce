@@ -1,3 +1,7 @@
+### Perview:
+
+![flutter with keycloak with pkce](./flutter-with-keycloak-with-pkce.gif)
+
 # How to run
 
 ### Pre-requisites:
@@ -27,7 +31,3 @@
 
 1. `cd mobile_app`
 2. `flutter run`
-
-### Perview:
-
-![flutter with keycloak with pkce](./flutter-with-keycloak-with-pkce.gif)
