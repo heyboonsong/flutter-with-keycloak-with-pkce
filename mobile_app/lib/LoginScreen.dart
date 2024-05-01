@@ -11,7 +11,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final String _clientId = 'pkce-client';
-  final String _issuer = 'http://localhost:8080/realms/master';
+  final String _issuer = 'http://localhost:8080/realms/heyboonsong';
   final String _redirectUrl = 'com.example.mobileapp:/oauth2redirect';
 
   final List<String> _scopes = <String>[
